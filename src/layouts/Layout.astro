@@ -20,6 +20,26 @@ const { title } = Astro.props;
 		<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 		
 		<title>{title}</title>
+<!-- Załączenie Tailwind CSS w locie (CDN) -->
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script>
+		  tailwind.config = {
+			theme: {
+			  extend: {
+				fontFamily: {
+				  display: ['Fredoka', 'sans-serif'],
+				  body: ['Plus Jakarta Sans', 'sans-serif'],
+				},
+				colors: {
+				  brand: {
+					green: '#2e7d32', greenLight: '#4caf50', greenSoft: '#e8f5e9',
+					yellow: '#fbc02d', orange: '#f57c00', dark: '#1b2a1a', sky: '#e1f5fe'
+				  }
+				}
+			  }
+			}
+		  }
+		</script>
 	</head>
 	<body class="bg-stone-50 text-stone-800 antialiased relative">
 		<slot />
