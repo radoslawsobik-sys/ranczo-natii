@@ -1,0 +1,244 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// =====================================
+// TUTAJ PODAJ SWÓJ ID ARKUSZA GOOGLE
+// =====================================
+const SHEET_ID = '1GCpOb7adfDnAsfLtGrFDQYcXPF-5Nx4KJ3kPIxAqLck';
+
+// Awaryjna baza danych
+let db = {
+  ogolne: {
+    nazwa: "Ranczo Natii", address: "ul. Piaskowa 8, Rokitno Szlacheckie",
+    phone1: "506 194 060", phone2: "518 078 748", tours: "10:00, 12:00, 14:00, 16:00",
+    heroTitle: "Magiczne miejsce pełne zwierząt!", heroDesc: "Zapraszamy całe rodziny do wyjątkowego Mini Zoo.",
+    heroImg: "https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=800&q=80",
+    aboutTitle: "Gospodarstwo z Pasją", aboutDesc: "Naszą misją jest edukacja najmłodszych...",
+    aboutImg1: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=600&q=80",
+    aboutImg2: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=600&q=80"
+  },
+  cennik: [
+    { nazwa: "Bilet Normalny", cena: 25, opis: "Dorośli" },
+    { nazwa: "Bilet Ulgowy", cena: 20, opis: "Dzieci do lat 3 bezpłatnie" }
+  ],
+  zwierzeta: [
+    { nazwa: "Żenety Tygrysie", kategoria: "Egzotyczne", opis: "Jedyna ekspozycja w Polsce!", img: "https://images.unsplash.com/photo-1534188753412-3e26d0d618d6?w=600&q=80" },
+    { nazwa: "Alpaki", kategoria: "Ssaki", opis: "Puszyste i łagodne", img: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=600&q=80" }
+  ],
+  galeria: ["https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&q=80"]
+};
+
+// Funkcja wyciągająca linki z Google Drive
+function getDirectImageUrl(url) {
+  if (!url) return '';
+  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  return match && match[1] ? `https://drive.google.com/uc?export=view&id=${match[1]}` : url;
+}
+
+// Pobieranie danych z arkusza podczas buildu
+if (SHEET_ID !== 'TUTAJ_WKLEJ_SWOJ_ID_ARKUSZA' && SHEET_ID !== '') {
+  const fetchSheet = async (sheetName) => {
+    try {
+      const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${sheetName}`);
+      const text = await res.text();
+      return JSON.parse(text.substring(47).slice(0, -2)).table.rows;
+    } catch { return []; }
+  };
+
+  const ogolneRows = await fetchSheet("Ogolne");
+  ogolneRows.forEach(row => { if (row.c[0] && row.c[1]) db.ogolne[row.c[0].v] = row.c[1].v; });
+
+  const cennikRows = await fetchSheet("Cennik");
+  if(cennikRows.length) db.cennik = cennikRows.map(row => ({ nazwa: row.c[0]?.v, cena: row.c[1]?.v, opis: row.c[2]?.v })).filter(i => i.nazwa);
+
+  const zwRows = await fetchSheet("Zwierzeta");
+  if(zwRows.length) db.zwierzeta = zwRows.map(row => ({ nazwa: row.c[0]?.v, kategoria: row.c[1]?.v, opis: row.c[2]?.v, img: getDirectImageUrl(row.c[3]?.v) })).filter(i => i.nazwa);
+
+  const galRows = await fetchSheet("Galeria");
+  if(galRows.length) db.galeria = galRows.map(row => ({
+    url: getDirectImageUrl(row.c[0]?.v),
+    tytul: row.c[1]?.v || 'Zdjęcie z Rancza Natii' // Pobiera tytuł, a jak go nie ma, daje domyślny
+  })).filter(i => i.url);}
+
+// Przekazanie cen do klienta dla Kalkulatora
+const priceAdult = db.cennik[0]?.cena || 25;
+const priceChild = db.cennik[1]?.cena || 20;
+---
+
+<Layout title={`${db.ogolne.nazwa} - Nasze ZOO`}>
+  <!-- HEADER -->
+  <header class="bg-brand-dark text-white text-xs sm:text-sm py-2.5 px-4 sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <div class="flex items-center gap-4">
+        <span class="text-brand-yellow font-medium"><i class="fa-solid fa-map-pin"></i> {db.ogolne.address}</span>
+        <span class="hidden md:inline text-emerald-300 font-medium"><i class="fa-solid fa-clock"></i> Wejścia: {db.ogolne.tours}</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href={`tel:${db.ogolne.phone1.replace(/\s+/g,'')}`} class="hover:text-brand-yellow font-bold"><i class="fa-solid fa-phone"></i> {db.ogolne.phone1}</a>
+        <a href={`tel:${db.ogolne.phone2.replace(/\s+/g,'')}`} class="hover:text-brand-yellow font-bold"><i class="fa-solid fa-mobile-screen"></i> {db.ogolne.phone2}</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="bg-white/95 backdrop-blur-md border-b border-emerald-100 sticky top-[41px] z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
+      <a href="#home" class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-brand-green flex items-center justify-center text-white text-2xl">
+          <i class="fa-solid fa-paw"></i>
+        </div>
+        <div>
+          <span class="block text-2xl font-bold text-brand-green font-fun">{db.ogolne.nazwa}</span>
+          <span class="block text-xs uppercase font-semibold text-brand-orange tracking-widest">& Nasze Zoo</span>
+        </div>
+      </a>
+      <div class="hidden lg:flex items-center gap-3 text-sm font-semibold text-stone-700">
+        <a href="#o-nas" class="hover:text-brand-green">O Nas</a>
+        <a href="#zoo" class="hover:text-brand-green">ZOO</a>
+        <a href="#cennik" class="hover:text-brand-green">Cennik</a>
+        <a href="#kontakt" class="ml-2 bg-brand-orange text-white px-5 py-2.5 rounded-full shadow-md hover:scale-105 transition">Rezerwacje</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="home" class="hero-pattern pt-8 pb-16 lg:py-24 border-b border-emerald-100">
+    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      <div class="lg:col-span-7 space-y-6">
+        <div class="inline-flex items-center gap-2 bg-emerald-100 text-brand-green px-4 py-2 rounded-full text-sm font-bold">
+          <i class="fa-solid fa-heart text-red-500"></i> Rodzinna Agroturystyka na Jurze
+        </div>
+        <h1 class="text-4xl sm:text-6xl font-extrabold text-stone-900 leading-tight">{db.ogolne.heroTitle}</h1>
+        <p class="text-lg text-stone-600">{db.ogolne.heroDesc}</p>
+        <div class="flex gap-4 pt-4">
+          <a href="#kontakt" class="bg-brand-green text-white text-lg font-bold px-8 py-4 rounded-2xl hover:scale-105 transition">Rezerwuj</a>
+        </div>
+      </div>
+      <div class="lg:col-span-5 relative">
+        <img src={getDirectImageUrl(db.ogolne.heroImg)} alt="Zoo" class="rounded-3xl shadow-2xl border-4 border-white h-[380px] w-full object-cover">
+      </div>
+    </div>
+  </section>
+
+  <!-- ZWIERZĘTA -->
+  <section id="zoo" class="py-20 bg-stone-100/70 border-y border-emerald-100">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center max-w-3xl mx-auto space-y-4 mb-12">
+        <div class="inline-block bg-brand-green text-white font-fun text-sm px-4 py-1.5 rounded-full">🐾 Ponad 50 Gatunków</div>
+        <h2 class="text-4xl font-extrabold text-stone-900">Nasi Wspaniali Mieszkańcy</h2>
+        
+        <div class="flex flex-wrap justify-center gap-2 pt-4">
+          <button class="filter-btn active bg-brand-green text-white px-5 py-2 rounded-xl font-bold text-sm shadow-md" data-filter="all">Wszystkie</button>
+          <button class="filter-btn bg-white text-stone-700 px-5 py-2 rounded-xl font-bold text-sm shadow-sm" data-filter="Egzotyczne">Egzotyczne</button>
+          <button class="filter-btn bg-white text-stone-700 px-5 py-2 rounded-xl font-bold text-sm shadow-sm" data-filter="Gospodarskie">Gospodarskie</button>
+          <button class="filter-btn bg-white text-stone-700 px-5 py-2 rounded-xl font-bold text-sm shadow-sm" data-filter="Ptaki">Ptaki</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="animals-container">
+        <!-- Renderowanie pętli w Astro -->
+        {db.zwierzeta.map((a) => (
+          <div class="animal-card bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition" data-category={a.kategoria}>
+            <img src={a.img} class="w-full h-48 object-cover" />
+            <div class="p-5 space-y-2">
+              <span class="text-[10px] font-bold uppercase text-brand-orange tracking-widest">{a.kategoria}</span>
+              <h3 class="text-xl font-bold font-fun text-stone-900">{a.nazwa}</h3>
+              <p class="text-stone-600 text-sm">{a.opis}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CENNIK I KALKULATOR -->
+  <section id="cennik" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div class="lg:col-span-7 bg-stone-50 rounded-3xl p-8 border border-emerald-100 space-y-6">
+        <h3 class="text-2xl font-bold font-fun text-stone-900"><i class="fa-solid fa-ticket text-brand-green"></i> Cennik Biletów</h3>
+        <div class="space-y-4">
+          {db.cennik.map(item => (
+            <div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-stone-200 shadow-sm">
+              <div><h4 class="font-bold text-stone-900">{item.nazwa}</h4><p class="text-xs text-stone-500">{item.opis}</p></div>
+              <span class="text-xl font-extrabold font-fun text-brand-green shrink-0">{item.cena} zł</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div class="lg:col-span-5 bg-white rounded-3xl p-6 border border-stone-200 shadow-sm space-y-4">
+        <h4 class="font-bold text-stone-900 font-fun text-lg"><i class="fa-solid fa-calculator text-brand-orange"></i> Kalkulator Kosztów</h4>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 mb-1">Dorośli ({priceAdult} zł)</label>
+            <input type="number" id="calc-adults" min="0" value="2" class="w-full border rounded-xl p-2.5 text-center font-bold">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-stone-600 mb-1">Dzieci ({priceChild} zł)</label>
+            <input type="number" id="calc-children" min="0" value="2" class="w-full border rounded-xl p-2.5 text-center font-bold">
+          </div>
+        </div>
+        <div class="pt-2 flex justify-between items-center">
+          <span class="text-sm font-semibold">Szacowany koszt:</span>
+          <span class="text-2xl font-bold font-fun text-brand-green" id="calc-total">0 zł</span>
+        </div>
+      </div>
+    </div>
+  </section>
+<!-- GALERIA -->
+  <section id="galeria" class="py-20 bg-stone-100">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-4xl font-extrabold text-stone-900">Migawki z Życia Rancza</h2>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {db.galeria.map(img => (
+          <div class="h-48 rounded-2xl overflow-hidden shadow-sm">
+            <img src={img.url} alt={img.tytul} title={img.tytul} class="w-full h-full object-cover">
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+  
+  <!-- SKRYPTY INTERAKTYWNE KLIENTA (Kalkulator i filtry) -->
+  <script is:inline define:vars={{ priceAdult, priceChild }}>
+    // Filtrowanie zwierząt (chowa/odkrywa wygenerowane elementy)
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        // Zmiana klas przycisków
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('bg-brand-green', 'text-white');
+          b.classList.add('bg-white', 'text-stone-700');
+        });
+        e.target.classList.remove('bg-white', 'text-stone-700');
+        e.target.classList.add('bg-brand-green', 'text-white');
+
+        // Filtrowanie kart zwierząt
+        const filter = e.target.getAttribute('data-filter');
+        document.querySelectorAll('.animal-card').forEach(card => {
+          if (filter === 'all' || card.getAttribute('data-category') === filter) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Kalkulator 
+    const inputAdults = document.getElementById('calc-adults');
+    const inputChildren = document.getElementById('calc-children');
+    const totalEl = document.getElementById('calc-total');
+
+    function calculate() {
+      const a = parseInt(inputAdults.value) || 0;
+      const c = parseInt(inputChildren.value) || 0;
+      totalEl.innerText = (a * priceAdult + c * priceChild) + " zł";
+    }
+
+    inputAdults.addEventListener('input', calculate);
+    inputChildren.addEventListener('input', calculate);
+    calculate(); // Pierwsze przeliczenie po załadowaniu
+  </script>
+</Layout>
