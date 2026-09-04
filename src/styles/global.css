@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@theme {
+  --color-brand-green: #2e7d32;
+  --color-brand-greenLight: #4caf50;
+  --color-brand-greenSoft: #e8f5e9;
+  --color-brand-yellow: #fbc02d;
+  --color-brand-orange: #f57c00;
+  --color-brand-dark: #1b2a1a;
+  --color-brand-sky: #e1f5fe;
+
+  --font-display: 'Fredoka', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
